@@ -4,6 +4,8 @@ services:
   cron-service:
     build: .
     container_name: guess-game-cron
+    env_file:
+      - config.env
     environment:
       - INNO_API_URL=${INNO_API_URL:-http://host.docker.internal:3000}
       - CRON_SECRET=${CRON_SECRET}
@@ -11,9 +13,12 @@ services:
       - NODE_ENV=production
     ports:
       - "3002:3002"
+    volumes:
+      - ./logs:/app/logs
+      - ./config.env:/app/config.env:ro
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3002/api/health"]
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3002/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3

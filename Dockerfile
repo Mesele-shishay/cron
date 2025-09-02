@@ -10,21 +10,21 @@ COPY package.json pnpm-lock.yaml ./
 RUN npm install -g pnpm
 
 # Install dependencies
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --prod
 
-# Copy source code
-COPY src/ ./src/
-COPY tsconfig.json ./
+# Copy application files
+COPY simple-server.js ./
+COPY config.env* ./
 
-# Build the application
-RUN pnpm run build
+# Create logs directory
+RUN mkdir -p logs
 
 # Expose port
 EXPOSE 3002
 
-# Health check
+# Health check using Node.js
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:3002/api/health || exit 1
+    CMD node -e "require('http').get('http://localhost:3002/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))"
 
 # Start the application
-CMD ["pnpm", "start"]
+CMD ["node", "simple-server.js"]
