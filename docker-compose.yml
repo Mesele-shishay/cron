@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  cron-service:
+    build: .
+    container_name: guess-game-cron
+    environment:
+      - INNO_API_URL=${INNO_API_URL:-http://host.docker.internal:3000}
+      - CRON_SECRET=${CRON_SECRET}
+      - PORT=3002
+      - NODE_ENV=production
+    ports:
+      - "3002:3002"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - inno-network
+
+networks:
+  inno-network:
+    external: true
+    name: inno-network
